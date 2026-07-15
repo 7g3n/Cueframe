@@ -20,5 +20,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run test
       - run: npm run build
-      # `npm run test` (Vitest) is added in Phase 6 once unit tests exist.
+      # Playwright E2E (e2e/) needs two live Supabase test accounts and is
+      # intentionally not run here — see e2e/README.md.

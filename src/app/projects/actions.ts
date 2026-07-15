@@ -4,20 +4,12 @@ import { randomUUID } from "crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { canTransitionStatus } from "@/lib/permissions";
 import type { ProjectStatus, UserRole } from "@/types/database";
 
 export interface ProjectFormState {
   error: string | null;
 }
-
-// Gated by the requester's role on THIS project (project_members.role_in_project)
-// when they're a member, falling back to their global profile role for the
-// owner (who never has their own membership row).
-const ALLOWED_STATUS_TRANSITIONS: Record<UserRole, ProjectStatus[]> = {
-  client: ["approved"],
-  creator: ["pending", "in_revision"],
-  admin: ["pending", "in_revision", "approved"],
-};
 
 export async function createProject(
   _prevState: ProjectFormState,
@@ -123,7 +115,7 @@ export async function updateProjectStatus(
 
   // The UI only ever offers transitions valid for the user's role, so
   // reaching here otherwise means the request was tampered with.
-  if (!ALLOWED_STATUS_TRANSITIONS[role].includes(newStatus)) {
+  if (!canTransitionStatus(role, newStatus)) {
     throw new Error("この操作を行う権限がありません。");
   }
 

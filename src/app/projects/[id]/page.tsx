@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { canUploadVersion } from "@/lib/permissions";
 import type { Profile, Project, Task, UserRole, Version } from "@/types/database";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusActions } from "@/components/status-actions";
@@ -90,7 +91,7 @@ export default async function ProjectPage({
 
   const effectiveRole: UserRole =
     myMembership?.role_in_project ?? profile?.role ?? "client";
-  const canUpload = isOwner || effectiveRole === "creator";
+  const canUpload = canUploadVersion(isOwner, effectiveRole);
 
   const assignees = [
     ...(ownerProfile

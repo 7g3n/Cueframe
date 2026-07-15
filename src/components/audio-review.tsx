@@ -9,6 +9,7 @@ import {
   toggleResolved,
   type CommentFormState,
 } from "@/app/comments/actions";
+import { filterUnresolved } from "@/lib/comments";
 import type { Comment } from "@/types/database";
 
 const MARKER_COLOR = "rgba(244, 63, 94, 0.5)";
@@ -39,9 +40,7 @@ export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps)
   const [isReady, setIsReady] = useState(false);
   const [showUnresolvedOnly, setShowUnresolvedOnly] = useState(false);
 
-  const visibleComments = showUnresolvedOnly
-    ? comments.filter((comment) => !comment.resolved)
-    : comments;
+  const visibleComments = filterUnresolved(comments, showUnresolvedOnly);
 
   // Create the waveform once per audio URL.
   useEffect(() => {
@@ -125,7 +124,7 @@ export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps)
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <div ref={containerRef} />
+        <div ref={containerRef} data-testid="waveform" />
         <div className="mt-2 flex items-center gap-3">
           <button
             type="button"
@@ -166,12 +165,7 @@ export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps)
               key={comment.id}
               onMouseEnter={() => setHoveredId(comment.id)}
               onMouseLeave={() => setHoveredId(null)}
-              onClick={() => {
-                if (comment.timestamp_sec !== null) {
-                  wsRef.current?.setTime(comment.timestamp_sec);
-                }
-              }}
-              className={`cursor-pointer rounded-lg border px-4 py-3 text-sm transition-colors ${
+              className={`rounded-lg border px-4 py-3 text-sm transition-colors ${
                 comment.resolved ? "opacity-60" : ""
               } ${
                 hoveredId === comment.id
@@ -180,15 +174,29 @@ export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps)
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-zinc-500">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (comment.timestamp_sec !== null) {
+                      wsRef.current?.setTime(comment.timestamp_sec);
+                    }
+                  }}
+                  onFocus={() => setHoveredId(comment.id)}
+                  onBlur={() => setHoveredId(null)}
+                  className="font-mono text-xs text-zinc-500 hover:underline"
+                  aria-label={`${
+                    comment.timestamp_sec !== null
+                      ? formatTime(comment.timestamp_sec)
+                      : "全体"
+                  }の位置に再生をシーク`}
+                >
                   {comment.timestamp_sec !== null
                     ? formatTime(comment.timestamp_sec)
                     : "全体"}
-                </span>
+                </button>
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     void toggleResolved(comment.id, !comment.resolved).then(
                       () => router.refresh(),
                     );
