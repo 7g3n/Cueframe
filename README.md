@@ -46,6 +46,15 @@ npm run dev
 
 http://localhost:3000 を開く。
 
+### Supabaseセットアップ(Phase 1〜)
+
+1. [Supabase](https://supabase.com/dashboard) でプロジェクトを作成
+2. Project Settings > API から `Project URL` と `anon public key` を取得し、`.env.local` に設定
+3. SQL Editor で [supabase/migrations/0001_profiles.sql](supabase/migrations/0001_profiles.sql) を実行(`profiles` テーブル、ロール(`client`/`creator`/`admin`)、RLSポリシー、新規登録時の自動プロフィール作成トリガーを構成)
+4. Authentication > Email のConfirm email設定に応じて、`/auth/confirm` がメール確認リンクの受け口になる
+
+Supabase未設定の間もアプリ自体は起動する(認証関連の機能のみ「未設定」の案内を表示)。
+
 ### 主なスクリプト
 
 | スクリプト | 内容 |
@@ -77,7 +86,7 @@ flowchart LR
 ## 実装フェーズ
 
 - [x] Phase 0: プロジェクト初期化、Cloudflare Workersデプロイ疎通確認
-- [ ] Phase 1: Supabase Auth、ロール設計、ダーク/ライトモード
+- [x] Phase 1: Supabase Auth、ロール設計、ダーク/ライトモード
 - [ ] Phase 2: プロジェクトCRUD、ファイルアップロード、バージョン管理
 - [ ] Phase 3: 波形描画、タイムスタンプコメント
 - [ ] Phase 4: A/B比較再生、ステータス管理、コメント解決・絞り込み
