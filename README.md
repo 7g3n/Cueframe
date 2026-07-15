@@ -53,6 +53,7 @@ http://localhost:3000 を開く。
 3. SQL Editor で以下のマイグレーションを順番に実行
    - [supabase/migrations/0001_profiles.sql](supabase/migrations/0001_profiles.sql): `profiles` テーブル、ロール(`client`/`creator`/`admin`)、RLSポリシー、新規登録時の自動プロフィール作成トリガー
    - [supabase/migrations/0002_projects.sql](supabase/migrations/0002_projects.sql): `projects` / `versions` テーブル、RLS、`project-files` Storageバケットとそのアクセスポリシー
+   - [supabase/migrations/0003_comments.sql](supabase/migrations/0003_comments.sql): `comments` テーブル(タイムスタンプ付きコメント)、RLS
 4. Authentication > Email のConfirm email設定に応じて、`/auth/confirm` がメール確認リンクの受け口になる
 
 Supabase未設定の間もアプリ自体は起動する(認証関連の機能のみ「未設定」の案内を表示)。
@@ -90,7 +91,7 @@ flowchart LR
 - [x] Phase 0: プロジェクト初期化、Cloudflare Workersデプロイ疎通確認
 - [x] Phase 1: Supabase Auth、ロール設計、ダーク/ライトモード
 - [x] Phase 2: プロジェクトCRUD、ファイルアップロード、バージョン管理
-- [ ] Phase 3: 波形描画、タイムスタンプコメント
+- [x] Phase 3: 波形描画、タイムスタンプコメント
 - [ ] Phase 4: A/B比較再生、ステータス管理、コメント解決・絞り込み
 - [ ] Phase 5: 権限管理(RLS)、タスク管理、共有URL
 - [ ] Phase 6: テスト整備、Storybook、Sentry、CI/CD完成、a11y/レスポンシブ仕上げ

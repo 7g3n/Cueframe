@@ -28,3 +28,13 @@ export interface Version {
   file_type: FileType;
   created_at: string;
 }
+
+export interface Comment {
+  id: string;
+  version_id: string;
+  author_id: string;
+  timestamp_sec: number | null;
+  body: string;
+  resolved: boolean;
+  created_at: string;
+}

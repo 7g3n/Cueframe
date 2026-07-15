@@ -75,12 +75,22 @@ export default async function ProjectPage({
                 <span>
                   v{version.version_number}({version.file_type})
                 </span>
-                <a
-                  href={`/projects/${project.id}/versions/${version.id}/download`}
-                  className="text-sm underline"
-                >
-                  開く
-                </a>
+                <span className="flex items-center gap-4">
+                  {version.file_type === "audio" && (
+                    <Link
+                      href={`/projects/${project.id}/versions/${version.id}`}
+                      className="text-sm underline"
+                    >
+                      レビュー
+                    </Link>
+                  )}
+                  <a
+                    href={`/projects/${project.id}/versions/${version.id}/download`}
+                    className="text-sm underline"
+                  >
+                    ダウンロード
+                  </a>
+                </span>
               </li>
             ))
           ) : (
