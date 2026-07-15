@@ -59,8 +59,9 @@ http://localhost:3000 を開く。
 
 ## CI/CD構成
 
-- **GitHub Actions** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): 全PRおよび`main`へのpushでlint / typecheck / buildを実行(Phase 6でユニットテスト・E2Eを追加予定)。
-- **Cloudflare Workers**: 本リポジトリをCloudflareダッシュボードのWorkers & PagesでGit連携し、pushで自動ビルド・デプロイ、PRごとにプレビューURLを発行する構成を想定。
+- **GitHub Actions - CI** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): 全PRおよび`main`へのpushでlint / typecheck / buildを実行(Phase 6でユニットテスト・E2Eを追加予定)。
+- **GitHub Actions - Deploy** ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)): `main`のCIが成功した後に`opennextjs-cloudflare deploy`を実行しCloudflare Workersへデプロイ。リポジトリのSecretsに`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`の設定が必要(未設定の間は失敗する)。
+- **Cloudflareダッシュボード**: Workers & Pagesで本リポジトリをGit連携すると、PRごとにプレビューURLが自動発行される(手動設定が必要)。
 
 ## アーキテクチャ（概要）
 
