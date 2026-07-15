@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -9,9 +10,9 @@ export interface ProjectFormState {
   error: string | null;
 }
 
-// Phase 4 scope: gated by the requester's global role. Phase 5's
-// project_members table will let this vary per-project (e.g. an admin
-// acting as a client on one project and creator on another).
+// Gated by the requester's role on THIS project (project_members.role_in_project)
+// when they're a member, falling back to their global profile role for the
+// owner (who never has their own membership row).
 const ALLOWED_STATUS_TRANSITIONS: Record<UserRole, ProjectStatus[]> = {
   client: ["approved"],
   creator: ["pending", "in_revision"],
@@ -38,17 +39,22 @@ export async function createProject(
     redirect("/login");
   }
 
-  const { data, error } = await supabase
+  // Generate the id ourselves and skip .select() on the insert: chaining
+  // .select() makes Postgres re-check the new row against the SELECT policy
+  // (can_access_project, a SECURITY DEFINER function) as part of RETURNING,
+  // which raises "new row violates row-level security policy" because that
+  // function's own query can't see the row created earlier in the same
+  // statement. Not needing RETURNING sidesteps it entirely.
+  const id = randomUUID();
+  const { error } = await supabase
     .from("projects")
-    .insert({ title, deadline, owner_id: user.id })
-    .select("id")
-    .single();
+    .insert({ id, title, deadline, owner_id: user.id });
 
-  if (error || !data) {
-    return { error: error?.message ?? "プロジェクトの作成に失敗しました。" };
+  if (error) {
+    return { error: error.message };
   }
 
-  redirect(`/projects/${data.id}`);
+  redirect(`/projects/${id}`);
 }
 
 export async function updateProject(
@@ -96,13 +102,24 @@ export async function updateProjectStatus(
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single<{ role: UserRole }>();
+  const { data: membership } = await supabase
+    .from("project_members")
+    .select("role_in_project")
+    .eq("project_id", projectId)
+    .eq("user_id", user.id)
+    .maybeSingle<{ role_in_project: UserRole }>();
 
-  const role = profile?.role ?? "client";
+  let role: UserRole;
+  if (membership) {
+    role = membership.role_in_project;
+  } else {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single<{ role: UserRole }>();
+    role = profile?.role ?? "client";
+  }
 
   // The UI only ever offers transitions valid for the user's role, so
   // reaching here otherwise means the request was tampered with.

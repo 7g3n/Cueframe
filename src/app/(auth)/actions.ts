@@ -12,6 +12,15 @@ const NOT_CONFIGURED_ERROR: AuthFormState = {
   error: "Supabaseが未設定のため、この機能はまだ利用できません。",
 };
 
+// Only ever redirect back to a same-site relative path (never a
+// protocol-relative "//host" URL) to avoid an open-redirect via `next`.
+function safeNextPath(next: FormDataEntryValue | null): string {
+  const value = String(next ?? "");
+  return value.startsWith("/") && !value.startsWith("//")
+    ? value
+    : "/dashboard";
+}
+
 export async function signIn(
   _prevState: AuthFormState,
   formData: FormData,
@@ -30,7 +39,7 @@ export async function signIn(
     return { error: error.message };
   }
 
-  redirect("/dashboard");
+  redirect(safeNextPath(formData.get("next")));
 }
 
 export async function signUp(

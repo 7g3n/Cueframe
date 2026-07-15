@@ -38,3 +38,41 @@ export interface Comment {
   resolved: boolean;
   created_at: string;
 }
+
+export interface ProjectMember {
+  project_id: string;
+  user_id: string;
+  role_in_project: UserRole;
+  created_at: string;
+}
+
+export interface ProjectInvite {
+  id: string;
+  project_id: string;
+  role_in_project: UserRole;
+  token: string;
+  created_by: string;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export type TaskStatus = "todo" | "in_progress" | "done";
+
+export interface Task {
+  id: string;
+  project_id: string;
+  assignee_id: string | null;
+  title: string;
+  due_date: string | null;
+  status: TaskStatus;
+  created_at: string;
+}
+
+export interface ShareLink {
+  id: string;
+  project_id: string;
+  token: string;
+  created_by: string;
+  expires_at: string | null;
+  created_at: string;
+}

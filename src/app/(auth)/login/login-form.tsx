@@ -11,6 +11,7 @@ export function LoginForm() {
   const [state, formAction, pending] = useActionState(signIn, initialState);
   const searchParams = useSearchParams();
   const justSignedUp = searchParams.get("confirm") === "1";
+  const next = searchParams.get("next");
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-16">
@@ -23,6 +24,7 @@ export function LoginForm() {
       )}
 
       <form action={formAction} className="flex flex-col gap-4" noValidate>
+        {next && <input type="hidden" name="next" value={next} />}
         <label className="flex flex-col gap-1 text-sm">
           メールアドレス
           <input

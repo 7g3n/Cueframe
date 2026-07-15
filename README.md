@@ -54,6 +54,12 @@ http://localhost:3000 を開く。
    - [supabase/migrations/0001_profiles.sql](supabase/migrations/0001_profiles.sql): `profiles` テーブル、ロール(`client`/`creator`/`admin`)、RLSポリシー、新規登録時の自動プロフィール作成トリガー
    - [supabase/migrations/0002_projects.sql](supabase/migrations/0002_projects.sql): `projects` / `versions` テーブル、RLS、`project-files` Storageバケットとそのアクセスポリシー
    - [supabase/migrations/0003_comments.sql](supabase/migrations/0003_comments.sql): `comments` テーブル(タイムスタンプ付きコメント)、RLS
+   - [supabase/migrations/0004_membership.sql](supabase/migrations/0004_membership.sql): `project_members` / `project_invites`(招待リンク)、projects/versions/commentsのRLSをメンバー対応に拡張
+   - [supabase/migrations/0005_tasks.sql](supabase/migrations/0005_tasks.sql): `tasks` テーブル、RLS
+   - [supabase/migrations/0006_share_links.sql](supabase/migrations/0006_share_links.sql): `share_links`、ログイン不要のゲストビュー用SECURITY DEFINER RPC
+   - [supabase/migrations/0007_fix_rls_recursion.sql](supabase/migrations/0007_fix_rls_recursion.sql): projects⇔project_membersのRLS循環参照を解消するSECURITY DEFINERヘルパー
+   - [supabase/migrations/0008_project_members_insert.sql](supabase/migrations/0008_project_members_insert.sql): project_membersへのINSERTポリシー(招待経由の自己参加のみ許可)
+   - [supabase/migrations/0009_profiles_shared_visibility.sql](supabase/migrations/0009_profiles_shared_visibility.sql): 同一プロジェクトのメンバー同士がお互いのプロフィールを閲覧できるように拡張
 4. Authentication > Email のConfirm email設定に応じて、`/auth/confirm` がメール確認リンクの受け口になる
 
 Supabase未設定の間もアプリ自体は起動する(認証関連の機能のみ「未設定」の案内を表示)。
@@ -93,7 +99,7 @@ flowchart LR
 - [x] Phase 2: プロジェクトCRUD、ファイルアップロード、バージョン管理
 - [x] Phase 3: 波形描画、タイムスタンプコメント
 - [x] Phase 4: A/B比較再生、ステータス管理、コメント解決・絞り込み
-- [ ] Phase 5: 権限管理(RLS)、タスク管理、共有URL
+- [x] Phase 5: 権限管理(RLS)、タスク管理、共有URL
 - [ ] Phase 6: テスト整備、Storybook、Sentry、CI/CD完成、a11y/レスポンシブ仕上げ
 
 ## スクリーンショット
