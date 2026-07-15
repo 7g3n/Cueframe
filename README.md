@@ -6,15 +6,25 @@
 
 > 個人開発のポートフォリオプロジェクトです。特定の勤務先・取引先のコード、デザイン、非公開仕様は一切参照・流用せず、一般的な制作レビュー業務のドメイン知識のみを前提にゼロから設計・実装しています。
 
-## 主要機能（予定含む）
+## スクリーンショット
 
-- 波形上へのタイムスタンプ付きコメント（wavesurfer.js）
-- バージョン間のA/B比較再生
-- ステータス管理(確認待ち / 修正中 / 承認済み)
-- ロールベースの権限管理(client / creator / admin)とRLS
-- タスク管理・締切ハイライト
+| ダッシュボード | プロジェクト詳細 |
+| --- | --- |
+| ![ダッシュボード](docs/screenshots/dashboard.png) | ![プロジェクト詳細](docs/screenshots/project-detail.png) |
+
+| 波形コメント | A/B比較再生 |
+| --- | --- |
+| ![波形コメント](docs/screenshots/waveform-review.png) | ![A/B比較再生](docs/screenshots/ab-compare.png) |
+
+## 主要機能
+
+- 波形上へのタイムスタンプ付きコメント(wavesurfer.js、リストとマーカーが双方向にホバー/クリック連動)
+- バージョン間のA/B比較再生(再生位置・再生状態を保ったままワンクリック切り替え)
+- ステータス管理(確認待ち / 修正中 / 承認済み)とロール別の遷移制限
+- ロールベースの権限管理(client / creator / admin)とRow Level Security
+- プロジェクトへのメンバー招待(招待リンク)、タスク管理・締切ハイライト
 - 期限付き共有URL(ログイン不要のゲストビュー)
-- ダーク/ライトモード、モバイル対応、アクセシビリティ(AA)対応
+- ダーク/ライトモード、モバイル対応、アクセシビリティ(キーボード操作・ARIA)対応
 
 ## 技術スタック
 
@@ -35,20 +45,20 @@
 - **Cloudflare Workers + OpenNext**: Next.jsのAPI Routes/Server ActionsをフルサポートしつつCloudflareのエッジ配信を活用するため。`@cloudflare/next-on-pages`は非推奨となったため、Cloudflareが公式に推奨する`@opennextjs/cloudflare`経由のWorkersデプロイを採用。
 - **Supabase**: Auth・Postgres・Storage・Row Level Securityをワンストップで提供し、MVPの開発速度を優先。将来的な音声ファイル増大に備え、Cloudflare R2へのオフロードをストレッチゴールとして想定。
 - **wavesurfer.js**: 波形描画とRegionsプラグインによるタイムスタンプコメントUIの実装コストを抑えるため。
-- **共有ビューはSECURITY DEFINER RPC、service_role keyは不使用**: ログイン不要の共有ビューはRLSを迂回する必要があるが、`SUPABASE_SERVICE_ROLE_KEY`(RLSを全面バイパスする強力な鍵)をアプリに持ち込むのではなく、トークン検証込みのSECURITY DEFINER関数を個別に用意した。攻撃対象範囲を「そのRPCが返す範囲」だけに limitできる。
+- **共有ビューはSECURITY DEFINER RPC、service_role keyは不使用**: ログイン不要の共有ビューはRLSを迂回する必要があるが、`SUPABASE_SERVICE_ROLE_KEY`(RLSを全面バイパスする強力な鍵)をアプリに持ち込むのではなく、トークン検証込みのSECURITY DEFINER関数を個別に用意した。攻撃対象範囲を「そのRPCが返す範囲」だけに限定できる。
 - **E2EはデフォルトのCIで実行しない**: 「アップロード→コメント→承認」を忠実に検証するには実際のSupabaseプロジェクトと2つの実アカウント(creator/client)が必要で、これをGitHub Secretsに常設するのは本番相当の認証情報をCIに置くことになり割に合わないと判断。ローカル実行かつ手動運用とし、その判断自体をこのREADMEに明記した。
 
 ## セットアップ
 
 ```bash
 npm install
-cp .env.example .env.local  # Supabase等の値を設定（Phase 1以降）
+cp .env.example .env.local  # Supabase等の値を設定
 npm run dev
 ```
 
 http://localhost:3000 を開く。
 
-### Supabaseセットアップ(Phase 1〜)
+### Supabaseセットアップ
 
 1. [Supabase](https://supabase.com/dashboard) でプロジェクトを作成
 2. Project Settings > API から `Project URL` と `anon public key` を取得し、`.env.local` に設定
@@ -66,7 +76,7 @@ http://localhost:3000 を開く。
 
 Supabase未設定の間もアプリ自体は起動する(認証関連の機能のみ「未設定」の案内を表示)。
 
-### Sentryセットアップ(Phase 6〜・任意)
+### Sentryセットアップ(任意)
 
 `NEXT_PUBLIC_SENTRY_DSN` が未設定の間は`sentry.*.config.ts`が自動的に無効化され(Supabase同様のグレースフルデグレード)、エラー監視なしで動作する。実際に有効化する場合は[Sentry](https://sentry.io)でNext.jsプロジェクトを作成し、`.env.local`にDSNを設定する。ソースマップアップロードには追加で`SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT`が必要。
 
@@ -109,19 +119,19 @@ flowchart LR
     Worker -->|エラー送信| Sentry[Sentry]
 ```
 
-## 実装フェーズ
+## 開発の進め方
 
-- [x] Phase 0: プロジェクト初期化、Cloudflare Workersデプロイ疎通確認
-- [x] Phase 1: Supabase Auth、ロール設計、ダーク/ライトモード
-- [x] Phase 2: プロジェクトCRUD、ファイルアップロード、バージョン管理
-- [x] Phase 3: 波形描画、タイムスタンプコメント
-- [x] Phase 4: A/B比較再生、ステータス管理、コメント解決・絞り込み
-- [x] Phase 5: 権限管理(RLS)、タスク管理、共有URL
-- [x] Phase 6: テスト整備、Storybook、Sentry、CI/CD完成、a11y/レスポンシブ仕上げ
+疎通確認から始めて機能を1つずつ積み上げる7段階のフェーズに分け、各フェーズの完了時に`lint` / `typecheck` / `test` / `build`に加えて実際にブラウザ(2アカウントでのロール別の挙動を含む)で動作確認してからコミットする、という進め方で開発した。
 
-## スクリーンショット
+1. プロジェクト初期化・Cloudflare Workersデプロイ疎通確認
+2. Supabase Auth・ロール設計・ダーク/ライトモード
+3. プロジェクトCRUD・ファイルアップロード・バージョン管理
+4. 波形描画・タイムスタンプコメント
+5. A/B比較再生・ステータス管理・コメント解決/絞り込み
+6. 権限管理(RLS)・タスク管理・共有URL
+7. テスト整備・Storybook・Sentry・CI/CD完成・a11y/レスポンシブ仕上げ
 
-準備中。
+この過程で見つけた実バグ(例: RLSポリシー同士の循環参照、`INSERT ... RETURNING`とRLSの組み合わせで起きる書き込み失敗、メンバーが他人のアップロードしたファイルを再生できない権限漏れ、など)は、それぞれSupabase移行ファイルとして[supabase/migrations](supabase/migrations)に残している。
 
 ## ライセンス
 
