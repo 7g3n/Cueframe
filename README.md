@@ -92,7 +92,7 @@ flowchart LR
 - [x] Phase 1: Supabase Auth、ロール設計、ダーク/ライトモード
 - [x] Phase 2: プロジェクトCRUD、ファイルアップロード、バージョン管理
 - [x] Phase 3: 波形描画、タイムスタンプコメント
-- [ ] Phase 4: A/B比較再生、ステータス管理、コメント解決・絞り込み
+- [x] Phase 4: A/B比較再生、ステータス管理、コメント解決・絞り込み
 - [ ] Phase 5: 権限管理(RLS)、タスク管理、共有URL
 - [ ] Phase 6: テスト整備、Storybook、Sentry、CI/CD完成、a11y/レスポンシブ仕上げ
 

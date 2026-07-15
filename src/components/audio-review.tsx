@@ -4,7 +4,11 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, { type Region } from "wavesurfer.js/plugins/regions";
-import { createComment, type CommentFormState } from "@/app/comments/actions";
+import {
+  createComment,
+  toggleResolved,
+  type CommentFormState,
+} from "@/app/comments/actions";
 import type { Comment } from "@/types/database";
 
 const MARKER_COLOR = "rgba(244, 63, 94, 0.5)";
@@ -23,6 +27,7 @@ interface AudioReviewProps {
 }
 
 export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps) {
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WaveSurfer | null>(null);
   const regionsRef = useRef<RegionsPlugin | null>(null);
@@ -32,6 +37,11 @@ export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps)
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [showUnresolvedOnly, setShowUnresolvedOnly] = useState(false);
+
+  const visibleComments = showUnresolvedOnly
+    ? comments.filter((comment) => !comment.resolved)
+    : comments;
 
   // Create the waveform once per audio URL.
   useEffect(() => {
@@ -79,7 +89,7 @@ export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps)
     regions.clearRegions();
     regionMapRef.current.clear();
 
-    comments.forEach((comment) => {
+    visibleComments.forEach((comment) => {
       if (comment.timestamp_sec === null) return;
 
       const region = regions.addRegion({
@@ -101,7 +111,7 @@ export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps)
 
       regionMapRef.current.set(comment.id, region);
     });
-  }, [comments, isReady]);
+  }, [visibleComments, isReady]);
 
   // Recolor the hovered marker without recreating any regions.
   useEffect(() => {
@@ -140,9 +150,18 @@ export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps)
         />
       )}
 
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={showUnresolvedOnly}
+          onChange={(e) => setShowUnresolvedOnly(e.target.checked)}
+        />
+        未解決のみ表示
+      </label>
+
       <ul className="flex flex-col gap-2">
-        {comments.length ? (
-          comments.map((comment) => (
+        {visibleComments.length ? (
+          visibleComments.map((comment) => (
             <li
               key={comment.id}
               onMouseEnter={() => setHoveredId(comment.id)}
@@ -153,21 +172,43 @@ export function AudioReview({ versionId, audioUrl, comments }: AudioReviewProps)
                 }
               }}
               className={`cursor-pointer rounded-lg border px-4 py-3 text-sm transition-colors ${
+                comment.resolved ? "opacity-60" : ""
+              } ${
                 hoveredId === comment.id
                   ? "border-blue-400 bg-blue-50 dark:bg-blue-950"
                   : "border-black/10 dark:border-white/15"
               }`}
             >
-              <span className="font-mono text-xs text-zinc-500">
-                {comment.timestamp_sec !== null
-                  ? formatTime(comment.timestamp_sec)
-                  : "全体"}
-              </span>
-              <p className="mt-1">{comment.body}</p>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-zinc-500">
+                  {comment.timestamp_sec !== null
+                    ? formatTime(comment.timestamp_sec)
+                    : "全体"}
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void toggleResolved(comment.id, !comment.resolved).then(
+                      () => router.refresh(),
+                    );
+                  }}
+                  className="text-xs underline"
+                >
+                  {comment.resolved ? "未解決に戻す" : "解決済みにする"}
+                </button>
+              </div>
+              <p className={`mt-1 ${comment.resolved ? "line-through" : ""}`}>
+                {comment.body}
+              </p>
             </li>
           ))
         ) : (
-          <p className="text-sm text-zinc-500">まだコメントはありません。</p>
+          <p className="text-sm text-zinc-500">
+            {showUnresolvedOnly
+              ? "未解決のコメントはありません。"
+              : "まだコメントはありません。"}
+          </p>
         )}
       </ul>
     </div>

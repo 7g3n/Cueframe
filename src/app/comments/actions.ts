@@ -40,3 +40,13 @@ export async function createComment(
 
   return { status: "success", error: null };
 }
+
+export async function toggleResolved(commentId: string, resolved: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("comments")
+    .update({ resolved })
+    .eq("id", commentId);
+
+  return { error: error?.message ?? null };
+}
